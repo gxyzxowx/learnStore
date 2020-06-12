@@ -1,15 +1,19 @@
 /*
  * @Date         : 2020-04-30 10:41:48
- * @LastEditors: Please set LastEditors
- * @LastEditTime: 2020-06-02 11:54:47
- * @FilePath     : \agent\src\assets\js\wr.js
+ * @LastEditors  : 曾迪
+ * @LastEditTime : 2020-06-11 11:40:57
+ * @FilePath     : \learnstore\src\assets\js\cm.js
  */
 import axios from 'axios'
 import QS from 'qs'
-// 生产环境
-// const BASE_URL = 'http://fangchan.caimaomeng.com/agent'
+
 // 开发环境
-const BASE_URL = '/agent'
+let BASE_URL = '/tsms'
+if (process.env.NODE_ENV === 'production') {
+  // 生产环境
+  BASE_URL = 'http://106.13.31.103:8082/agt-rest/tsms'
+}
+
 const obj = {
   // 封装axios
   get (url, params) {
@@ -53,37 +57,26 @@ const obj = {
     if (!patrn.exec(mobile)) { return false }
     return true
   },
-  getLinkWXUrl () {
-    // alert(window.location.href)
-    let url, customerId, masterUid
-    const hashname = window.location.hash
-    const local = window.location.href
-    if (local.indexOf('customer_id') !== -1) {
-      // 是案场助理详情页（扫码去的）
-      url = '/assistant/detail'
-      const index0 = hashname.indexOf('=')
-      customerId = hashname.slice(index0 + 1)
-    } else if (local.indexOf('master_uid') !== -1) {
-      // 是邀请经纪人
-      const index0 = hashname.indexOf('=')
-      masterUid = hashname.slice(index0 + 1)
-    } else {
-      url = window.location.href
-    }
-    // alert('参数url:' + url)
-    // alert('参数customer_id:' + customerId)
-    obj.post('/Login/getRedirectUrl', {
-      url: url,
-      customer_id: customerId || '',
-      master_uid: masterUid || ''
-    }).then((rs) => {
-      // alert(JSON.stringify(rs.data))
-      if (rs.code === 0) {
-        window.location.href = rs.data.redirect_url
+  loading (type) {
+    // type == 0隐藏,否则显示
+    var els = document.getElementsByClassName('wr-toast')
+    var len = els.length
+    if (type !== 0) {
+      // 显示
+      if (len) {
+        els[0].classList.remove('hidden')
       } else {
-        alert(rs.message)
+        var loadingstr = '<div class="wr-toast" style="top: 45%;"><div class="wr-toast-loading"></div><div class="wr-toast-content">加载中...</div></div>'
+        document.body.insertAdjacentHTML('beforeend', loadingstr)
       }
-    })
+    } else {
+      // 隐藏
+      if (len) {
+        els[0].classList.add('hidden')
+      } else {
+
+      }
+    }
   }
 }
 export default obj

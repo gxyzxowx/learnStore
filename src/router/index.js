@@ -1,7 +1,7 @@
 /*
  * @Date         : 2020-06-02 10:55:24
  * @LastEditors  : 曾迪
- * @LastEditTime : 2020-06-03 09:32:45
+ * @LastEditTime : 2020-06-11 16:15:08
  * @FilePath     : \learnstore\src\router\index.js
  * @Description  :
  */
@@ -15,7 +15,11 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    component: Home
+    component: Home,
+    meta: {
+      keepAlive: true,
+      isBack: false
+    }
   },
   {
     path: '/detail',

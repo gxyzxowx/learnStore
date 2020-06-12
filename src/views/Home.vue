@@ -1,21 +1,20 @@
 <!--
  * @Date         : 2020-06-02 10:55:24
  * @LastEditors  : 曾迪
- * @LastEditTime : 2020-06-03 10:21:11
+ * @LastEditTime : 2020-06-11 17:55:36
  * @FilePath     : \learnstore\src\views\Home.vue
  * @Description  : Home
 -->
 <style lang="scss" scoped>
 .home{
-  background-color: #F8F8F7;
+  background-color: #f3f3f3;
 .header-warp{
-position: fixed;
+  position: fixed;
     top:0;
     @include rect(100%, .9rem);
-      background-color: #F8F8F7;
+      background-color: #f3f3f3;
 }
   header{
-
     @include rect(100%, .42rem);
     display: flex;
     justify-content: space-between;
@@ -24,6 +23,7 @@ position: fixed;
     box-sizing: border-box;
     @include font(.18rem, #fff);
     background-color: $c;
+    letter-spacing:2px;
     .icon{
       @include rect(.18rem, .18rem);
       &.img{
@@ -33,19 +33,23 @@ position: fixed;
   }
   nav{
 
-    margin:.13rem;
+    margin:.15rem 0;
     display: flex;
     overflow-x: scroll;
     .nav-cell{
+       padding: 0.02rem .18rem;
+       line-height: .26rem;
       flex-shrink: 0;
-      @include rect(1.06rem, .24rem);
+      @include rect(auto, .24rem);
       background: #fff;
       color: #7C7C7C;
-      line-height: .24rem;
       text-align: center;
-      font-size: .12rem;
+      font-size: .16rem;
       border-radius:.1rem;
-      margin-right: .16rem;
+      margin-right: .18rem;
+      &:nth-of-type(1){
+        margin-left: .15rem;
+      }
       &.active{
         background: $c;
         color: #fff;
@@ -54,10 +58,10 @@ position: fixed;
   }
   main{
     margin:.13rem;
-      margin-top: .9rem;
+      margin-top: .95rem;
     ul{
       li.item{
-        @include rect(100%, .88rem);
+        @include rect(100%, 1rem);
         background-color: #fff;
         border-radius:.1rem;
         box-shadow:0px .02rem .15rem 0px rgba(1,54,48,0.05);
@@ -66,12 +70,13 @@ position: fixed;
         box-sizing: border-box;
         margin-bottom: .17rem;
         .pic{
-          @include square(.62rem);
+          @include square(.68rem);
           border-radius: .1rem;
           background-color: #D8D8D8;
           overflow: hidden;
           img{
             @include square(100%);
+            object-fit: cover;
           }
         }
         .content{
@@ -84,6 +89,12 @@ position: fixed;
             width: 100%;
             .title{
               @include font(.18rem, #222);
+              height: .49rem;
+              text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
             }
             .time{
               @include font(.12rem, #AFAFAF);
@@ -110,28 +121,30 @@ position: fixed;
     <div class="header-warp">
     <header>
       <div class="icon img"></div>
-      <div class="text">标题</div>
+      <div class="text">学习资料</div>
       <div class="icon"></div>
     </header>
     <nav>
-      <div class="nav-cell" :class="{active: currentIndex === index}" v-for="(item, index) in 4" :key="index" @click="changeCategory(index)">学习资料</div>
+      <div class="nav-cell" :class="{active: currentIndex === index}" v-for="(item, index) in categoryList" :key="index" @click="changeCategory(index)">{{item.codeName}}</div>
     </nav>
     </div>
 
     <main>
       <ul>
-        <li class="item" @click="linkCell()" v-for="(item, index) in num" :key="index">
+        <li class="item" @click="linkCell(index)" v-for="(item, index) in cellList" :key="index">
           <div class="pic">
-            <img src="@/assets/logo.png" alt="">
+            <!-- // 视频0，图片1, 2PPT多图 -->
+            <img :src="item.pDescS" v-if="item.type==0">
+            <img :src="item.pContent"  v-else  alt="">
+            <!-- <img src="@/assets/img/test.jpg" v-else  alt=""> -->
+
           </div>
           <div class="content">
             <div class="top">
-              <div class="title">这是标题</div>
-              <div class="time">2020年3月3日</div>
+              <div class="title">{{item.pName}}</div>
+              <!-- <div class="time">{{item.createTime}}</div> -->
             </div>
-            <div class="desc">描述描述描述描述描述描述描述描述描述描述
-              描述描述描述描述描述描述描述描述描述描述描述描述
-              描述描述描述描述描述描述描述描述是
+            <div class="desc">学习资料类型： {{item.typeName}}
             </div>
           </div>
         </li>
@@ -148,43 +161,87 @@ export default {
     return {
       ifBottom: false,
       num: 6,
-      currentIndex: 0
+      // 当前的类别
+      currentIndex: 0,
+      currentId: null,
+      categoryList: [],
+      cellList: []
     }
   },
   mounted () {
-    window.addEventListener('scroll', this.scrollEvent, false)
+    this.getCategory()
   },
   methods: {
+    getCategory () {
+      this.CM.loading()
+      this.CM.post('/generalCode/list', {
+        page: 1,
+        pageSize: 80,
+        parentGeneralCode: 'QR_CODE'
+      })
+        .then(rs => {
+          if (rs.code === 200) {
+            console.log(JSON.stringify(rs))
+            this.categoryList = rs.data.records
+            // 默认点击第一个
+            this.changeCategory(0)
+          } else {
+            alert(rs.message)
+          }
+          this.CM.loading(0)
+        })
+    },
+    // 点击分类出来分类列表
+    getList () {
+      this.CM.loading()
+      this.CM.post('/propaganda/list', {
+        page: 1,
+        pageSize: 80,
+        generalCode: this.currentId
+      })
+        .then(rs => {
+          if (rs.code === 200) {
+            console.log(JSON.stringify(rs))
+            const data = rs.data.records
+
+            data.map((item, index, arr) => {
+              const strMp4 = item.pName.indexOf('mp4')
+              const strPng = item.pName.indexOf('png')
+              const strJpg = item.pName.indexOf('jpg')
+              if (strMp4 !== -1) {
+                // 视频0，图片1, PPT多图
+                arr[index].type = 0
+                arr[index].typeName = '视频'
+              } else if (strPng !== -1 || strJpg !== -1) {
+                arr[index].type = 1
+                arr[index].typeName = '图片'
+              } else {
+                arr[index].type = 2
+                arr[index].typeName = 'PPT多图'
+              }
+            })
+            this.cellList = data
+          } else {
+            alert(rs.message)
+          }
+          this.CM.loading(0)
+        })
+    },
     // 进入详情
-    linkCell () {
+    linkCell (index) {
       this.$router.push({
         name: 'Detail',
-        query: 123
+        query: {
+          index: index,
+          cellList: this.cellList
+        }
       })
     },
     // 切换类别
     changeCategory (index) {
       this.currentIndex = index
-    },
-    // 触底监听事件
-    scrollEvent () {
-      if (document.documentElement.scrollTop +
-                     document.documentElement.clientHeight >=
-                    document.body.scrollHeight) {
-        this.onBottom()
-      }
-    },
-    onBottom () {
-      if (this.ifBottom) {
-        return
-      }
-      this.ifBottom = true
-      console.log(123)
-      // 请求数据到后端，然后增加page
-      setTimeout(() => {
-        this.num += 5
-        this.ifBottom = false
-      }, 1000)
+      this.currentId = this.categoryList[index].generalCode
+      this.getList()
     }
   }
 }
